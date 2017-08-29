@@ -12,3 +12,5 @@ Neural Collaborative Filtering
 
 required:
 scipy, numpy, pandas , and Theano
+
+is it okay to include MovieLens Dataset?
