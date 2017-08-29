@@ -116,12 +116,12 @@ def get_train_data_mf(cnt = -1):
 
 latent_dim = 10
 learning_rate = 0.05
+val_decrease = 0
+val_dec_max = 5
 epochs = 150
-
 best_ndcg = -1
 test_prec = -1
 bpr_mf = bpr.BPR_MF(n_users,n_items,latent_dim,learning_rate,1e-4*5.0)
-
 best_idx = -1
 cnt = 0
 last_val = 0.00
@@ -130,19 +130,25 @@ for i in range(epochs):
     
     loss = bpr_mf.train_mf(a,b,c)
     U,V = bpr_mf.get_params()
-    #val_ndcg = rec_eval.normalized_dcg_at_k(train_data, vad_data, U, V, k=50, vad_data=None)
-    #if best_ndcg < val_ndcg:
-    #   best_ndcg = val_ndcg
+    val_ndcg = rec_eval.normalized_dcg_at_k(train_data, vad_data, U, V, k=50, vad_data=None)
+    if best_ndcg < val_ndcg:
+       best_ndcg = val_ndcg
     test_prec = rec_eval.prec_at_k(train_data, test_data, U, V, k=10, vad_data=vad_data)
     print('best test test_prec : %f'% test_prec)
-    """
+    
     if val_ndcg > last_val:
+        val_decrease = 0
         last_val = val_ndcg
         bpr_mf.reset_lr(q = 1.2)
     else:
         last_val = val_ndcg
         if bpr_mf.lr*0.5 >= 0.01:
             bpr_mf.reset_lr(q = 0.5)
-        else:
+        elif bpr_mf.lr > 0.01:
             bpr_mf.reset_lr(p = 0.01)
-    """
+        val_decrease+=1
+        if val_decrease == val_dec_max:
+            break
+
+print('best test precision@10' % test_prec)
+    
