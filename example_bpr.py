@@ -1,10 +1,6 @@
 
 # coding: utf-8
 
-# # my kakkoii model
-
-# In[1]:
-
 import itertools
 import glob
 import os
@@ -83,7 +79,7 @@ import sklearn.utils
 
 def get_train_data_mf(cnt = -1):
     if cnt == -1:
-        cnt = len(u_train) //100
+        cnt = len(u_train) 
     sz = 100000
     users = []
     items = []
@@ -118,22 +114,28 @@ def get_train_data_mf(cnt = -1):
     return users,items,neg_items
 
 
-latent_dim = 30
-learning_rate = 0.1
+latent_dim = 10
+learning_rate = 0.05
 epochs = 150
 
 best_ndcg = -1
+test_prec = -1
 bpr_mf = bpr.BPR_MF(n_users,n_items,latent_dim,learning_rate,1e-4*5.0)
 
 best_idx = -1
 cnt = 0
 last_val = 0.00
 for i in range(epochs):
-    a,b,c = get_train_data_mf()
+    a,b,c = get_train_data_mf(100000)
     
     loss = bpr_mf.train_mf(a,b,c)
     U,V = bpr_mf.get_params()
-    val_ndcg = rec_eval.normalized_dcg_at_k(train_data, vad_data, U, V, k=20, vad_data=None)
+    #val_ndcg = rec_eval.normalized_dcg_at_k(train_data, vad_data, U, V, k=50, vad_data=None)
+    #if best_ndcg < val_ndcg:
+    #   best_ndcg = val_ndcg
+    test_prec = rec_eval.prec_at_k(train_data, test_data, U, V, k=10, vad_data=vad_data)
+    print('best test test_prec : %f'% test_prec)
+    """
     if val_ndcg > last_val:
         last_val = val_ndcg
         bpr_mf.reset_lr(q = 1.2)
@@ -143,4 +145,4 @@ for i in range(epochs):
             bpr_mf.reset_lr(q = 0.5)
         else:
             bpr_mf.reset_lr(p = 0.01)
-    print(val_ndcg)
+    """
