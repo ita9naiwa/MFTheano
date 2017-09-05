@@ -16,9 +16,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import scipy.sparse
 
-import seaborn as sns
-sns.set(context="paper", font_scale=1.5, rc={"lines.linewidth": 2}, font='DejaVu Serif')
-
 DATA_DIR = 'data/ml-100k/'
 fc = 5
 np.random.seed(1541)
@@ -122,7 +119,7 @@ def numerize(tp):
 
 # In[171]:
 
-directory = 'processed'
+directory = 'preprocessed'
 for idx, items in enumerate(zip(*[train_raw_datas,vad_raw_datas,test_raw_datas])):
     train_raw_data,vad_raw_data,test_raw_data = items
 

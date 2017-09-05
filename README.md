@@ -1,16 +1,21 @@
 factorziation based recommender systsem algorithms implemented with Theano
 
-now 
 
-BPR
-
-
-to be impelemetned
+Implcit feedback
+Bayesian Perosonalized Ranking
 
 Neural Collaborative Filtering
 
 
+
+Explicit Feedback
+BiasedMF(SVD)
+
+
+to be impelemetned
+
+
 required:
-scipy, numpy, pandas , and Theano
+TBA
 
 is it okay to include MovieLens Dataset?
