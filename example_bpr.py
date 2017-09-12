@@ -71,7 +71,7 @@ def get_train_data_mf(cnt = -1):
     return users,items,neg_items
 
 
-latent_dim = 10
+latent_dim = 8
 learning_rate = 0.05
 val_decrease = 0
 val_dec_max = 5
@@ -96,7 +96,10 @@ for i in range(epochs):
     if val_ndcg > last_val:
         val_decrease = 0
         last_val = val_ndcg
-        bpr_mf.reset_lr(q = 1.2)
+        if bpr_mf.lr * 1.2 <= 0.1:
+            bpr_mf.reset_lr(q = 1.2)
+        else:
+            bpr_mf.reset_lr(p = 0.1)
     else:
         last_val = val_ndcg
         if bpr_mf.lr*0.5 >= 0.01:

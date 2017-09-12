@@ -13,7 +13,7 @@ import optimizers
 
 
 def randinit(shape,scaleFactor = 1.0/0.6 ,dtype = theano.config.floatX):
-	scale = np.sqrt(np.sum(shapae))
+	scale = np.sqrt(np.sum(shape))
 	return np.random.normal(loc=0.0, scale=3.0/scale, size=shape).astype(dtype)
 
 class BPR_MF(object):
