@@ -56,9 +56,9 @@ class Recommender(ABC):
 	def predict(self,):
 		pass
 
-	@abstractmethod
-	def predict_matrix(self,):
-		pass
+	#@abstractmethod
+	#def predict_matrix(self,):
+	#	pass
 
 	@abstractmethod
 	def loss(self,):
