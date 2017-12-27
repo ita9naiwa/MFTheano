@@ -64,9 +64,11 @@ class Recommender(ABC):
 	def loss(self,):
 		pass
 
-	@abstractmethod
-	def iter_info_per_itr(self,):
-		pass
+	#@abstractmethod
+	def iter_info_per_itr(self):
+	    ret = "nothing to say for now..."
+	    return ret
+
 
 
 

@@ -8,7 +8,7 @@ from .Recommender import Implicit_recommender
 import time
 import tensorflow as tf
 import numpy as np 
-import tqdm
+from tqdm import tqdm
 from tensorflow.python.ops import random_ops
 from tensorflow.python.framework import ops
 from tensorflow.python.framework import ops
@@ -17,10 +17,11 @@ from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import random_ops
 
-def denoise(x, keep_prob, noise_shape=None,noise_size = None, seed=None, name=None):
+# steal from (tensorflow/somewhere/some_ops dropout)
+def masking(x, keep_prob, noise_shape=None,noise_size = None, seed=None, name=None):
     # mask input with zero with probability 1 - keep_prob
     # Brought from "dropout(...)" in tensorflow repository
-    with ops.name_scope(name, "denoise", [x]) as name:
+    with ops.name_scope(name, "masking", [x]) as name:
         x = ops.convert_to_tensor(x, name="x")
         keep_prob = ops.convert_to_tensor(keep_prob, dtype=x.dtype, name="keep_prob")
         # Do nothing if we know keep_prob == 1
@@ -70,7 +71,7 @@ class CDAE(Implicit_recommender):
                 u = self.u
 
         # Corrupt input first
-        self.x_tilda = denoise(self.x,self.keep_prob)
+        self.x_tilda = masking(self.x,self.keep_prob)
 
         # Can denote default initializer using variable scope like this
 
@@ -142,13 +143,13 @@ class CDAE(Implicit_recommender):
     def _update(self,X,vad_data,n_iters,batch_size,**kwargs):
 
         if True == self.verbose:
-            iter_state = tdqm(range(range(n_iters)))
+            iter_state = tqdm(range(n_iters))
         else:
             iter_state = range(n_iters)
 
         begin_time = time.time()
         for _ in iter_state:
-            cost_on_batch = self.run_epoch(X,batch_size)
+            cost_on_iteration = self.run_epoch(X,batch_size)
             if self.verbose:
                 print(self.iter_info_per_itr())
         return time.time() - begin_time

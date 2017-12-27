@@ -3,7 +3,9 @@
 
 Implcit feedback
 
-- Collaborative Denoising AutoEncoder
+- Collaborative Denoising AutoEncoder 	(CDAE)
+- Bayesian Personalized Ranking 		(BPR)
+
 
 Explicit feedback
 - Biased MF, also called Funk's SVD (SGD,ALS implementation)
