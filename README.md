@@ -1,21 +1,16 @@
-factorziation based recommender systsem algorithms implemented with Theano
+factorziation based recommender systsem algorithms implemented in [Tensorflow](http://tensorflow.org)
 
 
 Implcit feedback
-Bayesian Perosonalized Ranking
 
-Neural Collaborative Filtering
+- Collaborative Denoising AutoEncoder
 
+TODO:
 
-
-Explicit Feedback
-BiasedMF(SVD)
-
-
-to be impelemetned
+add these algorithms
+- Bayesian Perosonalized Ranking
+- Neural Collaborative Filtering
 
 
-required:
-TBA
-
-is it okay to include MovieLens Dataset?
+is it Okay to include MovieLens Dataset?
+---
