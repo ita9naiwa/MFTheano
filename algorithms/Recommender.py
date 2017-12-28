@@ -56,30 +56,32 @@ class Recommender(ABC):
 	def predict(self,):
 		pass
 
-	@abstractmethod
-	def predict_matrix(self,):
-		pass
+	#@abstractmethod
+	#def predict_matrix(self,):
+	#	pass
 
 	@abstractmethod
 	def loss(self,):
 		pass
 
-	@abstractmethod
-	def iter_info_per_itr(self,):
-		pass
+	#@abstractmethod
+	def iter_info_per_itr(self):
+	    ret = "nothing to say for now..."
+	    return ret
 
 
 
 
 
 
-class Implicit_recommender(Recommender):
+
+class implicit_recommender(Recommender):
 	
 	model_name = 'implicit_recommender'
 
 
 	def __init__(self, dtype = 'float32', verbose = True, seed =1234,**kwargs):
-		super(Implicit_recommender, self).__init__(dtype,verbose,seed,**kwargs)
+		super(implicit_recommender, self).__init__(dtype,verbose,seed,**kwargs)
 	
 	
 	def precision_recall_at_k(self,train_data,test_data,k):

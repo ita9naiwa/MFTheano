@@ -53,3 +53,6 @@ docs/_build/
 #my extension
 .gitignore
 #.mtext
+
+#jupyter temp files
+*.ipynb_checkpoints
