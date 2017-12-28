@@ -55,4 +55,5 @@ docs/_build/
 #.mtext
 
 #jupyter temp files
-*.ipynb_checkpoints
+
+.ipynb_checkpoints
