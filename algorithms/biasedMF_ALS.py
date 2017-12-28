@@ -49,7 +49,7 @@ class biasedMF_ALS(Explicit_recommender):
 		self.bias_c 	= np.zeros(n_items, dtype=self.dtype)
 		self.mu 		= np.mean(R[R.nonzero()])
 
-	def fit(self, R, vad_data=None,n_iters=10, **kwargs):
+	def fit(self, R, vad_data=None,n_iter=10, **kwargs):
 		'''Fit the model to the rating matirx R.
 
 		Parameters
@@ -63,24 +63,24 @@ class biasedMF_ALS(Explicit_recommender):
 		'''
 		n_users, n_items = R.shape
 		self._init_params(R)
-		elapsed_time = self._update(R,vad_data,n_iters, **kwargs)
+		elapsed_time = self._update(R,vad_data,n_iter, **kwargs)
 		print("elapsed time : %0.3fs"%elapsed_time)
 		return self.validation_rmse(vad_data)
 
-	def _update(self,R,vad_data,n_iters,**kwargs):
+	def _update(self,R,vad_data,n_iter,**kwargs):
 		RT = R.T.tocsr()
 		begin_time = time.time()
-		for itr in range(n_iters):
+		for itr in range(n_iter):
 			self._update_mf(R,RT)
 			if self.verbose:
 				validation_rmse = self.validation_rmse(vad_data)
 				if itr >= 3 and validation_rmse >= 0.8:
 					break
 				#train_loss = self.loss(R)
-				self.iter_info_per_itr(itr,0,validation_rmse)
+				self.info_per_iter(itr,0,validation_rmse)
 		return time.time() - begin_time
 
-	def iter_info_per_itr(self,itr,train_loss,validation_rmse):
+	def info_per_iter(self,itr,train_loss,validation_rmse):
 		info = str("[ Iteration #%d ]\t [ train loss %f ]\t [ validation rmse %f ]" % (itr,train_loss,validation_rmse))
 		return info
 

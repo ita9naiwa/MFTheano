@@ -1,4 +1,4 @@
-from .Recommender import Implicit_recommender
+from .Recommender import ImplicitRecommender
 from tqdm import tqdm
 import random
 import os
@@ -8,7 +8,7 @@ import numpy as np
 
 
 
-class BPR(Implicit_recommender):
+class BPR(ImplicitRecommender):
 	def __init__(self,dtype = 'float32',verbose=True,seed=None,**kwargs):
 		np.seterr(divide='ignore', invalid='ignore')
 		super(BPR,self).__init__(dtype,verbose,seed,**kwargs)
@@ -33,13 +33,13 @@ class BPR(Implicit_recommender):
 		self.beta = np.random.normal(0, self.init_std, size = (n_items,self.latent_dim)).astype(dtype=self.dtype)
 		self.item_bias = np.zeros(n_items, dtype=self.dtype)
 
-	def train_model(self,X,n_iters = 10,vad_data = None, **kwargs):
+	def train_model(self,X,n_iter = 10,vad_data = None, **kwargs):
 		n_users,n_items = X.shape
 		
 		self._init_model(n_users,n_items)
-		elapsed_time = self._update(X,vad_data,n_iters,**kwargs)
+		elapsed_time = self._update(X,vad_data,n_iter,**kwargs)
 
-	def _update(self,X,vad_data,n_iters = 15,n_sample = 50000,**kwargs):
+	def _update(self,X,vad_data,n_iter = 15,n_sample = 50000,**kwargs):
 		n_users,n_items = X.shape
 
 		zp = X.nonzero()
@@ -48,9 +48,9 @@ class BPR(Implicit_recommender):
 		set_interactions =set(interactions)
 		interactions = list(interactions)
 		if True == self.verbose:
-			iter_state = tqdm(range(n_iters))
+			iter_state = tqdm(range(n_iter))
 		else:
-			iter_state = range(n_iters)
+			iter_state = range(n_iter)
 		
 		begin_time = time.time()
 		for _ in iter_state:
@@ -58,7 +58,7 @@ class BPR(Implicit_recommender):
 				interactions,set_interactions, n_sample)
 
 			if self.verbose:
-				print(self.iter_info_per_itr())
+				print(self.info_per_iter())
 
 		return time.time() - begin_time
 

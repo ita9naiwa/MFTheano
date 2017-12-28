@@ -66,11 +66,11 @@ class biasedMF_SGD(Explicit_recommender):
 			if True == self.verbose:
 				train_loss = self.loss(R)
 				validation_rmse = self.validation_rmse(itr,vad_data,test_nz)
-				self.iter_info_per_itr(itr,train_loss,validation_rmse)
+				self.info_per_iter(itr,train_loss,validation_rmse)
 		elapsed_time = time.time() - prev_time
 		print("elapsed time : %0.3fs"%elapsed_time)
 
-	def iter_info_per_itr(self,itr,train_loss,validation_rmse):
+	def info_per_iter(self,itr,train_loss,validation_rmse):
 		print("[ Iteration #%d ]\t [ train loss %f ]\t [ validation rmse %f ]" % (itr,train_loss,validation_rmse))
 
 

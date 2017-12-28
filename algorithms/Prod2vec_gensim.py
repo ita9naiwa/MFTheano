@@ -6,9 +6,10 @@
 from .Recommender import ImplicitRecommender
 
 import json
+import tqdm
 import logging
 from  gensim.models import Word2Vec
-
+from scipy.sparse import csr_matrix,lil_matrix
 import os,sys
 import time
 
@@ -85,9 +86,55 @@ class Prod2vec(ImplicitRecommender):
 		super(Prod2vec,self).__init__(dtype,verbose,seed,**kwargs)
 		self.model_name = 'Prod2vec'
 		self.seed = seed
-		self._parse_kwargs(**kwargs)
-	def _parse_kwargs:
-		self.latent_dim = int32(kwargs.get('latent_dim',100))
 		# items which appears less than min_count should be erased first
 		self.min_count = 0
-		self.
+		self._parse_kwargs(**kwargs)
+
+	def _parse_kwargs(self,**kwargs):
+		self.latent_dim = int(kwargs.get('latent_dim',100))
+		self.n_jobs = int(kwargs.get('n_jobs'),8)
+		self.learning_rate = float(kwargs.get('learning_rate'),0.05)
+		self.n_negatives = int(kwargs.get('n_negatives'),10)
+
+	def _init_model(self):
+		# gensim word2vec initializes model as training begins
+		pass
+	def train_model(self,X,n_iter,**kwargs):
+		begin_time = time.time()
+		dataset = self.matrix_to_lil(X,to_str = True)
+
+		model = Word2Vec(dataset,
+			size = self.latent_dim,
+			seed = self.seed,
+			alpha = self.learning_rate,
+			workers = self.n_jobs,
+			negative = self.n_negatives,
+			iter = n_iter,
+			window = 123456789,
+			min_count = 0,
+			sg = 1)
+		elapsed_time = time.time() - begin_time
+
+	def info_per_iter(Self):
+		ret = "nothing to say for now..."
+		return ret
+	
+	def predict(self,X):
+		dataset = self.matrix_to_lil(X,to_str = True)
+		
+
+	def matrix_to_lil(X,to_str = True):
+		lil_X = X.tolil()
+		list_of_lists = []
+		ignored_rows = []
+		for i in range(X.shape[0]):
+			row = lil_X.getrow().tolist()
+			if len(row) > 0:
+				if True == to_str:
+					list_of_lists.append([str(x) for x in row])
+				else:
+					list_of_lists.append(row)
+			else:
+				ignored_rows.append(i)
+		return dataset, ignored_rows
+			

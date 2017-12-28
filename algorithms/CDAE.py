@@ -4,7 +4,7 @@
 """
 # coding: utf-8
 
-from .Recommender import Implicit_recommender
+from .Recommender import ImplicitRecommender
 import time
 import tensorflow as tf
 import numpy as np 
@@ -39,7 +39,7 @@ def masking(x, keep_prob, noise_shape=None,noise_size = None, seed=None, name=No
         ret = x * binary_tensor
         return ret
 
-class CDAE(Implicit_recommender):
+class CDAE(ImplicitRecommender):
     
     def __init__(self,dtype = 'float32',verbose = True,seed=None,**kwargs):
         super(CDAE,self).__init__(dtype,verbose,seed,**kwargs)
@@ -49,7 +49,7 @@ class CDAE(Implicit_recommender):
         self._parse_kwargs(**kwargs)
 
     def _parse_kwargs(self,**kwargs):
-        self.latent_dim = np.int32(kwargs.get('latent_dim',100))
+        self.latent_dim = int(kwargs.get('latent_dim',100))
         self.learning_rate = float(kwargs.get('leraning_rate',0.05))
         self.keep_prob = float(kwargs.get('keep_prob',0.5))
         self.use_user_bias = bool(kwargs.get('use_user_bias',False))
@@ -129,7 +129,7 @@ class CDAE(Implicit_recommender):
 
         self.predicted = -(activation(tf.nn.bias_add(tf.matmul(activation(tf.nn.bias_add(tf.matmul(x,w_in),b_in)),w_out),b_out))) + 10000.0 * x
 
-    def train_model(self,X,n_iters = 10,batch_size = 16,vad_data = None,**kwargs):
+    def train_model(self,X,n_iter = 10,batch_size = 16,vad_data = None,**kwargs):
         '''Fit the model to the interaction matrix X
         Parameters
         ----------
@@ -138,23 +138,23 @@ class CDAE(Implicit_recommender):
         '''
         n_users,n_items = X.shape
         self._init_model(n_users,n_items)
-        elapsed_time = self._update(X,vad_data,n_iters,batch_size,**kwargs)
+        elapsed_time = self._update(X,vad_data,n_iter,batch_size,**kwargs)
     
-    def _update(self,X,vad_data,n_iters,batch_size,**kwargs):
+    def _update(self,X,vad_data,n_iter,batch_size,**kwargs):
 
         if True == self.verbose:
-            iter_state = tqdm(range(n_iters))
+            iter_state = tqdm(range(n_iter))
         else:
-            iter_state = range(n_iters)
+            iter_state = range(n_iter)
 
         begin_time = time.time()
         for _ in iter_state:
             cost_on_iteration = self.run_epoch(X,batch_size)
             if self.verbose:
-                print(self.iter_info_per_itr())
+                print(self.info_per_iter())
         return time.time() - begin_time
     
-    def iter_info_per_itr(self):
+    def info_per_iter(self):
         ret = "nothing to say for now..."
         return ret
 

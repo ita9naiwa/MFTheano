@@ -65,7 +65,7 @@ class Recommender(ABC):
 		pass
 
 	#@abstractmethod
-	def iter_info_per_itr(self):
+	def info_per_iter(self):
 	    ret = "nothing to say for now..."
 	    return ret
 
