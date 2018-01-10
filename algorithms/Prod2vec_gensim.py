@@ -12,73 +12,7 @@ from  gensim.models import Word2Vec
 from scipy.sparse import csr_matrix,lil_matrix
 import os,sys
 import time
-
-class Shelf2Vec(object):
-	def __init__(self,model_config = None,
-		db_config = None,log_dir = 'log'):
-		logging.basicConfig(filename = os.path.join(log_dir,'log'),level = logging.INFO)
-		logger = logging.getLogger('shelf2vec')
-		self.model = None
-		self.model_config = model_config
-		self.db_config = db_config
-		print(self.model_config)
-		print(self.db_config)
-		self.model_begin()
-
-	def model_begin(self):
-		model_config 	= self.model_config
-		db_config		= self.db_config
-		dataset = self.load_dataset(db_config)
-		logger.info("training begins...")
-		if model_config is not None:
-			self.model = Word2Vec(dataset,
-			size = model_config['latent_dim'],
-			min_count = model_config['min_count'],
-			seed = model_config['seed'],
-			alpha = model_config['learning_rate'],
-			workers = model_config['n_jobs'],
-			negative = model_config['n_negatives'],
-			iter = model_config['n_iter'],
-			window = 123456789,
-			sg = 1)
-		else:
-			# Debug statement:
-			self.model = Word2Vec(dataset,
-				size = 2,
-				min_count = 100,
-				seed = 0,
-				iter = 1)
-			return False
-		logger.info("training done...")
-		return True
-
-	def most_similar(self,shelf,k=2):
-		if self.model == None:
-			return False
-		else:
-			return list(zip(*self.model.wv.most_similar(shelf,topn=k)))
-
-	def load_dataset(self,db_config):
-		logger.info("data load...")
-		if db_config == None:
-			logging.error("no db information given")
-			return None
-		logger.info("sending query")
-		query = """select tbp.book_name,tbp.book_id,tbp.bookshelf_id,tbc.category_id
-    		From (select book_name, book_id, bookshelf_id from tbl_bookshelf_piece where bookshelf_id is not null) tbp
-    		Inner Join (select book_id, category_id from tbl_book_category) tbc
-    		On tbp.book_id = tbc.book_id"""
-		conn = pymysql.connect(host=db_config['db_host'],port=db_config['db_port'], user=db_config['db_user'], password=db_config['db_password'],
-		                       db=db_config['db_database'], charset='utf8')
-		curs = conn.cursor()
-		# SQL문 실행
-		raw_data = pd.read_sql(query , con=conn)
-		logger.info("get data from db")
-		#This is quite slow, is there any faster way to do this?
-		#make list of books in the same shelf
-		#item_id,shelf_id rows -> shelf_1 : [item_1,item_2,...,]
-		return raw_data.groupby('bookshelf_id').book_name.apply(list).value
-
+import numpy as np 
 
 
 class Prod2vec(ImplicitRecommender):
@@ -92,18 +26,20 @@ class Prod2vec(ImplicitRecommender):
 
 	def _parse_kwargs(self,**kwargs):
 		self.latent_dim = int(kwargs.get('latent_dim',100))
-		self.n_jobs = int(kwargs.get('n_jobs'),8)
-		self.learning_rate = float(kwargs.get('learning_rate'),0.05)
-		self.n_negatives = int(kwargs.get('n_negatives'),10)
+		self.n_jobs = int(kwargs.get('n_jobs',8))
+		self.learning_rate = float(kwargs.get('learning_rate',0.05))
+		self.n_negatives = int(kwargs.get('n_negatives',10))
 
 	def _init_model(self):
 		# gensim word2vec initializes model as training begins
 		pass
 	def train_model(self,X,n_iter,**kwargs):
+		self.n_users,self.n_items = X.shape
 		begin_time = time.time()
-		dataset = self.matrix_to_lil(X,to_str = True)
+		dataset, _ = self.matrix_to_lil(X,to_str = True)
 
-		model = Word2Vec(dataset,
+		print("training begins")
+		self.model = Word2Vec(dataset,
 			size = self.latent_dim,
 			seed = self.seed,
 			alpha = self.learning_rate,
@@ -120,21 +56,45 @@ class Prod2vec(ImplicitRecommender):
 		return ret
 	
 	def predict(self,X):
-		dataset = self.matrix_to_lil(X,to_str = True)
-		
+		test_rows, _ = self.matrix_to_lil(X,to_str = True,
+			ignore_empty_row = False,test = True)
 
-	def matrix_to_lil(X,to_str = True):
+		ret = np.zeros(X.shape,dtype = self.dtype)
+		for i,row in enumerate(test_rows):
+			if len(row) > 0:
+				for item_id,sim in self.model.wv.most_similar(row,topn=self.n_items):
+					ret[i,int(item_id)] = sim
+			else:
+				pass
+		print(ret.shape)
+
+		return -ret
+
+
+
+
+
+
+
+
+
+	def loss(self):
+		pass
+
+	def matrix_to_lil(self,X,to_str = True,ignore_empty_row = True,test = False):
 		lil_X = X.tolil()
-		list_of_lists = []
+		dataset = []
 		ignored_rows = []
 		for i in range(X.shape[0]):
-			row = lil_X.getrow().tolist()
-			if len(row) > 0:
-				if True == to_str:
-					list_of_lists.append([str(x) for x in row])
+			row = lil_X.getrow(i).nonzero()[1].tolist()
+			
+			if True == to_str:
+				if True == test:
+					dataset.append([str(x) for x in row if str(x) in self.model.wv.vocab])
 				else:
-					list_of_lists.append(row)
+					dataset.append([str(x) for x in row if str(x)])
 			else:
-				ignored_rows.append(i)
+				dataset.append(row)
+
 		return dataset, ignored_rows
 			

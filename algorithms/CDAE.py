@@ -18,6 +18,7 @@ from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import random_ops
 
 # steal from (tensorflow/somewhere/some_ops dropout)
+
 def masking(x, keep_prob, noise_shape=None,noise_size = None, seed=None, name=None):
     # mask input with zero with probability 1 - keep_prob
     # Brought from "dropout(...)" in tensorflow repository
@@ -66,12 +67,14 @@ class CDAE(ImplicitRecommender):
 
         with tf.name_scope("input"):
             self.x = tf.placeholder("float", [None,n_items],name='x')
+
+            self.dropout_rate = tf.placeholder("float",name='dropout_rate')
             if self.use_user_bias:
                 self.u = tf.placeholder("int32",[None])
                 u = self.u
 
         # Corrupt input first
-        self.x_tilda = masking(self.x,self.keep_prob)
+        self.x_tilda = masking(self.x,self.dropout_rate)
 
         # Can denote default initializer using variable scope like this
 
@@ -110,6 +113,7 @@ class CDAE(ImplicitRecommender):
             hidden_layer = activation(tf.nn.bias_add(tf.gather(self.user_bias,u) + tf.matmul(x_tilda,w_in),b_in))
         else:
             hidden_layer = activation(tf.nn.bias_add(tf.matmul(x_tilda,w_in),b_in))
+        hidden_layer = tf.nn.dropout(hidden_layer,self.dropout_rate)
 
         self.reconstructed_x = activation(tf.nn.bias_add(tf.matmul(hidden_layer,w_out),b_out))
     
@@ -127,20 +131,21 @@ class CDAE(ImplicitRecommender):
         self.sess.run(self.init)
         self.saver = tf.train.Saver()
 
-        self.predicted = -(activation(tf.nn.bias_add(tf.matmul(activation(tf.nn.bias_add(tf.matmul(x,w_in),b_in)),w_out),b_out))) + 10000.0 * x
+        self.predicted = -(activation(tf.nn.bias_add(tf.matmul(activation(tf.nn.bias_add(tf.matmul(x,w_in),b_in)),w_out),b_out)))
 
-    def train_model(self,X,n_iter = 10,batch_size = 16,vad_data = None,**kwargs):
+    def train_model(self,X,n_iter = 10,batch_size = 16,dropout_rate = 0.5,vad_data = None,**kwargs):
         '''Fit the model to the interaction matrix X
         Parameters
         ----------
         X : ??
         vad_data = same data type and same shape with X;
         '''
+        self.n_users,self.n_items = X.shape
         n_users,n_items = X.shape
         self._init_model(n_users,n_items)
-        elapsed_time = self._update(X,vad_data,n_iter,batch_size,**kwargs)
+        elapsed_time = self._update(X,vad_data,n_iter,batch_size,dropout_rate,**kwargs)
     
-    def _update(self,X,vad_data,n_iter,batch_size,**kwargs):
+    def _update(self,X,vad_data,n_iter,batch_size,dropout_rate,**kwargs):
 
         if True == self.verbose:
             iter_state = tqdm(range(n_iter))
@@ -149,14 +154,11 @@ class CDAE(ImplicitRecommender):
 
         begin_time = time.time()
         for _ in iter_state:
-            cost_on_iteration = self.run_epoch(X,batch_size)
+            cost_on_iteration = self.run_epoch(X,batch_size,dropout_rate)
             if self.verbose:
-                print(self.info_per_iter())
+                print(self.info_per_iter(_,kwargs.get('test_visible',None),kwargs.get('test_hidden',None),kwargs.get('k',10)))
         return time.time() - begin_time
     
-    def info_per_iter(self):
-        ret = "nothing to say for now..."
-        return ret
 
     def loss(self,X):
         if True == self.use_user_bias:
@@ -171,18 +173,16 @@ class CDAE(ImplicitRecommender):
     def predict_matrix(self):
         return self.predict(X)
 
-    def run_epoch(self,X,batch_size):
+    def run_epoch(self,X,batch_size,dropout_rate):
         costs = []
         n_rows = X.shape[0]
         count = n_rows // batch_size
 
         rows = np.random.choice(n_rows,size = (count,batch_size))
         for i in range(count):
-            
+            feed_dict = {self.x : X[rows[i]],self.dropout_rate : dropout_rate}
             if True == self.use_user_bias:
-                feed_dict = {self.x : X[rows[i]],self.u : rows[i]}
-            else:
-                feed_dict = {self.x : X[rows[i]]}
+                feed_dict[self.u] = rows[i]
 
             _,current_cost_ = self.sess.run([self.optimizer,self.pred_error],
             feed_dict = feed_dict)
@@ -193,8 +193,7 @@ class CDAE(ImplicitRecommender):
         predicted = predict(X)
         return np.argpartition(predicted,k,axis=1)[:,:k]
     def predict_topk_test(self,X,X_test,k=5):
-        predicted = np.asarray(self.sess.run(self.predicted,feed_dict = {self.x : X}))
-        predicted += 100.0 * X
+        predicted = np.asarray(self.sess.run(self.predicted,feed_dict = {self.x : X,self.dropout_rate : 1.0}))
         return np.argpartition(predicted,k,axis=1)[:,:k]
 
 
